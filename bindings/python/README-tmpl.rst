@@ -56,6 +56,17 @@ Features
 ------------
 Installation
 ------------
+
+**Prerequisites:**
+
+Before installing `ggwave`, you need to have a C++ compiler (g++) installed on your system.
+
+*   On Debian/Ubuntu: `sudo apt-get install g++`
+*   On Fedora: `sudo dnf install gcc-c++`
+*   On macOS: Install Xcode Command Line Tools (`xcode-select --install`)
+
+Once you have g++ installed, you can proceed with the installation of `ggwave`:
+
 ::
 
     pip install ggwave

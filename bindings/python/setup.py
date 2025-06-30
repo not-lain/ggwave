@@ -1,8 +1,24 @@
 from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext as _build_ext
 from codecs import open
 import os
+import subprocess
 
-cmdclass = {}
+# Custom build_ext command to check for g++
+class build_ext(_build_ext):
+    def run(self):
+        try:
+            subprocess.check_output(['g++', '--version'])
+        except OSError:
+            raise RuntimeError(
+                "C++ compiler (g++) not found. Please install g++ and try again.\n"
+                "On Debian/Ubuntu, you can install it with: sudo apt-get install g++\n"
+                "On Fedora, you can install it with: sudo dnf install gcc-c++\n"
+                "On macOS, you can install it by installing Xcode Command Line Tools: xcode-select --install"
+            )
+        _build_ext.run(self)
+
+cmdclass = {'build_ext': build_ext}
 long_description = ""
 
 # Build directly from cython source file(s) if user wants so (probably for some experiments).
@@ -11,10 +27,26 @@ long_description = ""
 # e.g.: GGWAVE_USE_CYTHON=1 python setup.py install
 USE_CYTHON = os.getenv('GGWAVE_USE_CYTHON', False)
 if USE_CYTHON:
-    from Cython.Build import build_ext
+    from Cython.Build import build_ext as cython_build_ext
+    # Further customize the Cython build_ext if necessary, or use the g++ check directly
+    # For now, we assume the g++ check is primary. If Cython has specific compiler needs,
+    # this might need more nuanced handling.
+    class CustomCythonBuildExt(cython_build_ext):
+        def run(self):
+            try:
+                subprocess.check_output(['g++', '--version'])
+            except OSError:
+                raise RuntimeError(
+                    "C++ compiler (g++) not found. Please install g++ and try again.\n"
+                    "On Debian/Ubuntu, you can install it with: sudo apt-get install g++\n"
+                    "On Fedora, you can install it with: sudo dnf install gcc-c++\n"
+                    "On macOS, you can install it by installing Xcode Command Line Tools: xcode-select --install"
+                )
+            cython_build_ext.run(self)
+    cmdclass['build_ext'] = CustomCythonBuildExt
     ggwave_module_src = "ggwave.pyx"
-    cmdclass['build_ext'] = build_ext
 else:
+    # For non-Cython builds, cmdclass['build_ext'] is already set to the g++ checking version
     ggwave_module_src = "ggwave.bycython.cpp"
 
 # Load README.rst into long description.
